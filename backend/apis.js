@@ -1,5 +1,4 @@
-const YahooFinance = require('yahoo-finance2').default;
-const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
+const yahooFinance = require('yahoo-finance2').default;
 
 async function searchStocks(query, retries = 2) {
     for (let attempt = 1; attempt <= retries; attempt++) {
@@ -11,7 +10,7 @@ async function searchStocks(query, retries = 2) {
             })).slice(0, 10);
         } catch (error) {
             if (attempt === retries) {
-                console.error("Search Error:", error.message || error);
+                console.er("Search Error:", error.message || error);
                 return [];
             }
             await new Promise(resolve => setTimeout(resolve, 800));
