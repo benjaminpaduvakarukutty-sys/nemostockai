@@ -1,4 +1,5 @@
 const yahooFinance = require('yahoo-finance2').default;
+yahooFinance.suppressNotices(['yahooSurvey']);
 
 async function searchStocks(query, retries = 2) {
     for (let attempt = 1; attempt <= retries; attempt++) {
