@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nemo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <h1>Nemo</h1>
+    <p class="subtitle">STOCK ANALYSIS AI</p>
+    
+    <div id="nemoContainer" title="Click to interact with Nemo!">
+        <div id="nemoAura"></div>
+        <img id="nemoAvatar" src="neutral.png" alt="Nemo Neutral">
+    </div>
+
+    <div id="chatBox">
+        <div class="chat-message"><b>System:</b> Nemo is online. Search for your company to find analysis stock.</div>
+    </div>
+
+    <div class="input-container">
+        <input type="text" id="userInput" placeholder="Search company stock analysis..." autocomplete="off">
+        <button id="muteBtn" type="button" title="Mute or Unmute Voice">Mute Mic</button>
+        <button id="sendBtn" type="button">Send</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
