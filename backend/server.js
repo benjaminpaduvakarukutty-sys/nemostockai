@@ -14,7 +14,7 @@ app.use(cors());
 app.use(express.json());
 
 app.get('/', (req, res) => {
-    res.send('Stock Analysis AI Backend is online.');
+    res.sendFile(__dirname + '/index.html');
 });
 
 app.post('/api/message', async (req, res) => {
