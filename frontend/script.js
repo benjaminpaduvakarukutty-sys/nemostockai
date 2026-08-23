@@ -11,7 +11,7 @@ let isMuted = false;
 // Dynamic API URL for local development vs Render production
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:3000'
-    : 'https://YOUR-RENDER-BACKEND-NAME.onrender.com';
+    : 'https://nemostockai.onrender.com';
 
 const dom = {
     userInput: document.getElementById("userInput"),
