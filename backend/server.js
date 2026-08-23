@@ -13,6 +13,10 @@ const port = 3000;
 app.use(cors());
 app.use(express.json());
 
+app.get('/', (req, res) => {
+    res.send('Stock Analysis AI Backend is online.');
+});
+
 app.post('/api/message', async (req, res) => {
     try {
         const { userText, compareWith } = req.body;
