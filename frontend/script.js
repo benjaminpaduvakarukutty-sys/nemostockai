@@ -190,7 +190,7 @@ function hideSuggestions() {
 }
 
 async function fetchSuggestions(query) {
-    if (!query || query.length < 1) {
+    if (!query || query.length < 2) {
         hideSuggestions();
         return;
     }
@@ -291,13 +291,13 @@ dom.nemoContainer.addEventListener("click", handlePoke);
 dom.userInput.addEventListener("input", (event) => {
     const val = event.target.value.trim();
     clearTimeout(searchTimeout);
-    if (!val) {
+    if (!val || val.length < 2) {
         hideSuggestions();
         return;
     }
     searchTimeout = setTimeout(() => {
         fetchSuggestions(val);
-    }, 250);
+    }, 600);
 });
 
 dom.userInput.addEventListener("keydown", (event) => {
