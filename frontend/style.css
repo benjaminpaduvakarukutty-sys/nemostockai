@@ -1,0 +1,177 @@
+:root {
+    --bg-color: #0d0d0f;
+    --panel-bg: #16161a;
+    --input-bg: #222229;
+    --border-color: #2a2a33;
+    --text-main: #f0f0f5;
+    --accent-color: #ff9800;
+}
+
+* {
+    box-init: border-box;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    text-align: center;
+    padding: 30px 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+}
+
+h1 {
+    margin-bottom: 2px;
+    color: #ffffff;
+    font-size: 1.8rem;
+    letter-spacing: 0.5px;
+}
+
+p.subtitle {
+    letter-spacing: 2px;
+    color: #777;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 15px;
+}
+
+#nemoContainer {
+    position: relative;
+    width: 170px;
+    height: 170px;
+    margin: 0 auto 15px auto;
+    cursor: pointer;
+}
+
+#nemoAvatar {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--accent-color);
+    position: relative;
+    z-index: 2;
+    box-shadow: 0px 0px 20px rgba(255, 152, 0, 0.3);
+    transform-origin: center bottom;
+    transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.1s ease;
+}
+
+#nemoAvatar:active {
+    transform: scale(0.94);
+}
+
+#nemoAura {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: rgba(255, 152, 0, 0.2);
+    filter: blur(15px);
+    z-index: 1;
+    transition: background 0.4s ease;
+}
+
+#chatBox {
+    width: 100%;
+    max-width: 500px;
+    background: var(--panel-bg);
+    padding: 12px;
+    border-radius: 12px;
+    height: 200px;
+    overflow-y: auto;
+    text-align: left;
+    border: 1px solid var(--border-color);
+    font-size: 13.5px;
+    line-height: 1.5;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    scroll-behavior: smooth;
+}
+
+.chat-message {
+    word-break: break-word;
+    padding: 4px 0;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.input-container {
+    width: 100%;
+    max-width: 500px;
+    display: flex;
+    gap: 8px;
+}
+
+input[type="text"] {
+    flex: 1;
+    padding: 11px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background-color: var(--input-bg);
+    color: #fff;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input[type="text"]:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.2);
+}
+
+button {
+    padding: 11px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    background-color: var(--accent-color);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: filter 0.2s, transform 0.1s;
+}
+
+button:hover {
+    filter: brightness(1.1);
+}
+
+button:active {
+    transform: scale(0.96);
+}
+
+button:disabled {
+    background-color: #444;
+    cursor: not-allowed;
+    filter: none;
+}
+
+#micBtn {
+    background-color: #e91e63;
+}
+
+#micBtn.listening {
+    background-color: #f44336;
+    animation: pulse 1.2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+    100% { transform: scale(1); }
+}
