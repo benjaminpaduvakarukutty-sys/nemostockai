@@ -10,8 +10,10 @@ async function searchStocks(query, retries = 2) {
                 shortName: q.shortname || q.longname || q.name || q.symbol
             })).slice(0, 10);
         } catch (error) {
+            if (error.message && error.message.includes("Too Many Requests")) {
+                return [];
+            }
             if (attempt === retries) {
-                console.error("Search Error:", error.message || error);
                 return [];
             }
             await new Promise(resolve => setTimeout(resolve, 800));
@@ -24,7 +26,6 @@ async function fetchStockQuote(symbol, retries = 2) {
         try {
             const quote = await yahooFinance.quote(symbol);
             if (!quote) {
-                console.warn(`No quote data returned for symbol: ${symbol}`);
                 return null;
             }
             return {
@@ -39,8 +40,10 @@ async function fetchStockQuote(symbol, retries = 2) {
                 averageDailyVolume3Month: quote.averageDailyVolume3Month ?? 0
             };
         } catch (error) {
+            if (error.message && error.message.includes("Too Many Requests")) {
+                return null;
+            }
             if (attempt === retries) {
-                console.error(`Fetch Quote Error for ${symbol}:`, error.message || error);
                 return null;
             }
             await new Promise(resolve => setTimeout(resolve, 800));
