@@ -69,96 +69,101 @@ app.post('/api/message', async (req, res) => {
             }
         }
 
-        // 1. If it looks like an exact ticker, fetch quote, validate stock first, then safely fetch Finnhub and News
-        if (cleanText.includes(".") || (cleanText.length <= 6 && !cleanText.includes(" "))) {
-            let stock = await fetchStockQuote(upperText);
+        // 1. Resolve ticker symbol (handles both direct tickers and company names)
+        let tickerToLookup = upperText;
 
-            if (stock && stock.regularMarketPrice) {
-                let finnhubData = null;
-                let newsArticles = [];
-                if (!upperText.includes(".")) {
-                    try {
-                        [finnhubData, newsArticles] = await Promise.all([
-                            getCompanyFundamentals(upperText).catch(() => null),
-                            getStockNews(upperText).catch(() => [])
-                        ]);
-                    } catch (error) {
-                        console.error("Data fetch error:", error.message);
-                    }
-                }
-
-                let exchangeRate = 1;
-                if (stock.currency && stock.currency.toUpperCase() !== 'USD') {
-                    exchangeRate = await getExchangeRate(stock.currency, 'USD') || 1;
-                }
-                
-                const priceInUSD = (Number(stock.regularMarketPrice) * exchangeRate).toFixed(2);
-                const changePercent = Number(stock.regularMarketChangePercent) || 0;
-                const trendSymbol = changePercent >= 0 ? "📈" : "📉";
-
-                const highPrice = Number(stock.regularMarketDayHigh) || Number(stock.regularMarketPrice);
-                const lowPrice = Number(stock.regularMarketDayLow) || Number(stock.regularMarketPrice);
-                const daySpread = highPrice - lowPrice;
-                const volatilityIndex = highPrice > 0 ? ((daySpread / highPrice) * 100).toFixed(2) : "0.00";
-                
-                let dataQuality = "COMPLETE";
-                let volumeRatio = 1.0;
-                if (stock.regularMarketVolume && stock.averageDailyVolume3Month) {
-                    volumeRatio = Number(stock.regularMarketVolume) / Number(stock.averageDailyVolume3Month);
-                } else {
-                    dataQuality = "DEGRADED (MISSING VOLUME)";
-                }
-
-                const quantitativeScore = calculateAlphaScore(changePercent, volatilityIndex, volumeRatio);
-                const holdingDays = calculateHoldingPeriod(parseFloat(volatilityIndex));
-                
-                const { strategyHeader, strategyWhy, strategyAction } = generateStrategy({
-                    changePercent,
-                    quantitativeScore,
-                    daySpread,
-                    volatility: parseFloat(volatilityIndex),
-                    volumeRatio,
-                    holdingDays
-                });
-
-                let reply = `${trendSymbol} ${stock.shortName || upperText} (${stock.symbol}) [Telemetry: ${dataQuality}]\n` +
-                            `• Live Price: ${stock.regularMarketPrice} ${stock.currency} (~$${priceInUSD} USD)\n` +
-                            `• Daily Performance: ${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(2)}%\n` +
-                            `• Intraday Volatility: ${volatilityIndex}% (Spread: ${daySpread.toFixed(2)})\n` +
-                            `• Alpha Rating: ${quantitativeScore} out of 100\n`;
-
-                if (finnhubData && finnhubData.metrics) {
-                    const rawPe = finnhubData.metrics.peBasicExclExtraTTM || finnhubData.metrics.peTTM;
-                    const peRatio = rawPe ? Number(rawPe).toFixed(1) : "N/A";
-                    
-                    const rawCap = Number(finnhubData.profile?.marketCapitalization);
-                    let marketCap = "N/A";
-                    if (Number.isFinite(rawCap) && rawCap > 0) {
-                        if (rawCap >= 1000) {
-                            marketCap = `$${(rawCap / 1000).toFixed(2)}B`;
-                        } else {
-                            marketCap = `$${rawCap.toFixed(2)}M`;
-                        }
-                    }
-
-                    reply += `• Valuation (P/E): ${peRatio}\n` +
-                             `• Market Capitalization: ${marketCap}\n`;
-                }
-
-                if (newsArticles && newsArticles.length > 0) {
-                    reply += `\nLATEST NEWS (LAST WEEK):\n`;
-                    newsArticles.forEach(article => {
-                        reply += `• [${article.sentimentLabel}] ${article.title} (${article.source})\n`;
-                    });
-                }
-
-                reply += `\nSTRATEGY OUTLOOK: ${strategyHeader}\n` +
-                         `• Key Takeaway: ${strategyWhy}\n` +
-                         `• Recommended Action: ${strategyAction}`;
-
-                const emotion = changePercent >= 0 ? "happy" : "sad";
-                return res.json({ reply, emotion });
+        if (cleanText.includes(" ") || cleanText.length > 6) {
+            const searchMatches = await searchStocks(cleanText);
+            if (searchMatches && searchMatches.length > 0) {
+                tickerToLookup = searchMatches[0].symbol.toUpperCase();
             }
+        }
+
+        let stock = await fetchStockQuote(tickerToLookup);
+
+        if (stock && stock.regularMarketPrice) {
+            let finnhubData = null;
+            let newsArticles = [];
+            try {
+                [finnhubData, newsArticles] = await Promise.all([
+                    getCompanyFundamentals(tickerToLookup).catch(() => null),
+                    getStockNews(tickerToLookup).catch(() => [])
+                ]);
+            } catch (error) {
+                console.error("Data fetch error:", error.message);
+            }
+
+            let exchangeRate = 1;
+            if (stock.currency && stock.currency.toUpperCase() !== 'USD') {
+                exchangeRate = await getExchangeRate(stock.currency, 'USD') || 1;
+            }
+            
+            const priceInUSD = (Number(stock.regularMarketPrice) * exchangeRate).toFixed(2);
+            const changePercent = Number(stock.regularMarketChangePercent) || 0;
+            const trendSymbol = changePercent >= 0 ? "📈" : "📉";
+
+            const highPrice = Number(stock.regularMarketDayHigh) || Number(stock.regularMarketPrice);
+            const lowPrice = Number(stock.regularMarketDayLow) || Number(stock.regularMarketPrice);
+            const daySpread = highPrice - lowPrice;
+            const volatilityIndex = highPrice > 0 ? ((daySpread / highPrice) * 100).toFixed(2) : "0.00";
+            
+            let dataQuality = "COMPLETE";
+            let volumeRatio = 1.0;
+            if (stock.regularMarketVolume && stock.averageDailyVolume3Month) {
+                volumeRatio = Number(stock.regularMarketVolume) / Number(stock.averageDailyVolume3Month);
+            } else {
+                dataQuality = "DEGRADED (MISSING VOLUME)";
+            }
+
+            const quantitativeScore = calculateAlphaScore(changePercent, volatilityIndex, volumeRatio);
+            const holdingDays = calculateHoldingPeriod(parseFloat(volatilityIndex));
+            
+            const { strategyHeader, strategyWhy, strategyAction } = generateStrategy({
+                changePercent,
+                quantitativeScore,
+                daySpread,
+                volatility: parseFloat(volatilityIndex),
+                volumeRatio,
+                holdingDays
+            });
+
+            let reply = `${trendSymbol} ${stock.shortName || tickerToLookup} (${stock.symbol}) [Telemetry: ${dataQuality}]\n` +
+                        `• Live Price: ${stock.regularMarketPrice} ${stock.currency} (~$${priceInUSD} USD)\n` +
+                        `• Daily Performance: ${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(2)}%\n` +
+                        `• Intraday Volatility: ${volatilityIndex}% (Spread: ${daySpread.toFixed(2)})\n` +
+                        `• Alpha Rating: ${quantitativeScore} out of 100\n`;
+
+            if (finnhubData && finnhubData.metrics) {
+                const rawPe = finnhubData.metrics.peBasicExclExtraTTM || finnhubData.metrics.peTTM;
+                const peRatio = rawPe ? Number(rawPe).toFixed(1) : "N/A";
+                
+                const rawCap = Number(finnhubData.profile?.marketCapitalization);
+                let marketCap = "N/A";
+                if (Number.isFinite(rawCap) && rawCap > 0) {
+                    if (rawCap >= 1000) {
+                        marketCap = `$${(rawCap / 1000).toFixed(2)}B`;
+                    } else {
+                        marketCap = `$${rawCap.toFixed(2)}M`;
+                    }
+                }
+
+                reply += `• Valuation (P/E): ${peRatio}\n` +
+                         `• Market Capitalization: ${marketCap}\n`;
+            }
+
+            if (newsArticles && newsArticles.length > 0) {
+                reply += `\nLATEST NEWS (LAST WEEK):\n`;
+                newsArticles.forEach(article => {
+                    reply += `• [${article.sentimentLabel}] ${article.title} (${article.source})\n`;
+                });
+            }
+
+            reply += `\nSTRATEGY OUTLOOK: ${strategyHeader}\n` +
+                   `• Key Takeaway: ${strategyWhy}\n` +
+                   `• Recommended Action: ${strategyAction}`;
+
+            const emotion = changePercent >= 0 ? "happy" : "sad";
+            return res.json({ reply, emotion });
         }
 
         // 2. Otherwise, run autocomplete search suggestions
