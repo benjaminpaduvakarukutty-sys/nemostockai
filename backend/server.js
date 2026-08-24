@@ -141,8 +141,8 @@ app.post('/api/message', async (req, res) => {
                 }
 
                 reply += `\nSTRATEGY OUTLOOK: ${strategyHeader}\n` +
-                         `• Key Takeaway: ${strategyWhy}\n` +
-                         `• Recommended Action: ${strategyAction}`;
+                          `• Key Takeaway: ${strategyWhy}\n` +
+                          `• Recommended Action: ${strategyAction}`;
 
                 const emotion = changePercent >= 0 ? "happy" : "sad";
                 return res.json({ reply, emotion });
