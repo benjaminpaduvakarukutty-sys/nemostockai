@@ -8,7 +8,8 @@ async function getStockNews(symbol) {
         return [];
     }
 
-    const url = `https://api.marketaux.com/v1/news/all?symbols=${encodeURIComponent(symbol)}&limit=5&api_token=${apiKey}`;
+    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const url = `https://api.marketaux.com/v1/news/all?symbols=${encodeURIComponent(symbol)}&published_after=${oneWeekAgo}&limit=5&api_token=${apiKey}`;
 
     try {
         const response = await fetch(url);
@@ -32,10 +33,12 @@ async function getStockNews(symbol) {
                 else if (score < -0.2) sentimentLabel = "Negative";
             }
 
+            const labelText = sentimentLabel === "Negative" ? " (it's bad)" : "";
+
             return {
                 title: article.title,
                 source: article.source,
-                sentimentLabel,
+                sentimentLabel: `${sentimentLabel}${labelText}`,
                 matchScore: matchedEntity ? matchedEntity.match_score : 0
             };
         });
