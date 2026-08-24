@@ -6,6 +6,7 @@ const { searchStocks, fetchStockQuote } = require('./apis');
 const { getExchangeRate } = require('./frankfurter');
 const { getECBData } = require('./api2');
 const { getCompanyFundamentals } = require('./finnhub');
+const { getStockNews } = require('./newsApi');
 const { calculateAlphaScore, calculateHoldingPeriod, generateStrategy, compareStocks } = require('./brain');
 
 const app = express();
@@ -68,17 +69,21 @@ app.post('/api/message', async (req, res) => {
             }
         }
 
-        // 1. If it looks like an exact ticker, fetch quote, validate stock first, then safely fetch Finnhub
+        // 1. If it looks like an exact ticker, fetch quote, validate stock first, then safely fetch Finnhub and News
         if (cleanText.includes(".") || (cleanText.length <= 6 && !cleanText.includes(" "))) {
             let stock = await fetchStockQuote(upperText);
 
             if (stock && stock.regularMarketPrice) {
                 let finnhubData = null;
+                let newsArticles = [];
                 if (!upperText.includes(".")) {
                     try {
-                        finnhubData = await getCompanyFundamentals(upperText);
+                        [finnhubData, newsArticles] = await Promise.all([
+                            getCompanyFundamentals(upperText).catch(() => null),
+                            getStockNews(upperText).catch(() => [])
+                        ]);
                     } catch (error) {
-                        console.error("Finnhub error:", error.message);
+                        console.error("Data fetch error:", error.message);
                     }
                 }
 
@@ -140,9 +145,16 @@ app.post('/api/message', async (req, res) => {
                              `• Market Capitalization: ${marketCap}\n`;
                 }
 
+                if (newsArticles && newsArticles.length > 0) {
+                    reply += `\nLATEST NEWS (LAST WEEK):\n`;
+                    newsArticles.forEach(article => {
+                        reply += `• [${article.sentimentLabel}] ${article.title} (${article.source})\n`;
+                    });
+                }
+
                 reply += `\nSTRATEGY OUTLOOK: ${strategyHeader}\n` +
-                          `• Key Takeaway: ${strategyWhy}\n` +
-                          `• Recommended Action: ${strategyAction}`;
+                         `• Key Takeaway: ${strategyWhy}\n` +
+                         `• Recommended Action: ${strategyAction}`;
 
                 const emotion = changePercent >= 0 ? "happy" : "sad";
                 return res.json({ reply, emotion });
